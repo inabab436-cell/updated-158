@@ -401,10 +401,10 @@ async function extractProfileFieldsWithAI(
           product_name: {
             type: "string",
             description:
-              "The product the customer has settled on in THIS conversation, as it was named in the chat. Only when the customer clearly chose it; omit while they are still browsing or comparing.",
+                  "The product the customer has settled on in THIS conversation. Require evidence in a USER message: they stated, selected, corrected, or clearly accepted it. An assistant suggestion or attached image alone is never evidence. Omit while they are browsing, comparing, or merely asking whether the assistant understands.",
           },
-          color: { type: "string", description: "The colour the customer chose for that product. Omit if not chosen yet." },
-          size: { type: "string", description: "The size the customer chose. Omit if not chosen yet." },
+              color: { type: "string", description: "The colour the customer chose or clearly accepted in a USER message. Never copy an unaccepted colour from an assistant reply. Omit if not chosen yet." },
+              size: { type: "string", description: "The size the customer chose or clearly accepted in a USER message. Never copy an unaccepted size from an assistant reply. Omit if not chosen yet." },
           quantity: { type: "string", description: "How many units the customer asked for, as digits. Omit if never stated." },
           payment_method: {
             type: "string",
@@ -430,7 +430,7 @@ async function extractProfileFieldsWithAI(
           {
             role: "system",
             content:
-              "You read a sales chat and extract two things. (1) The contact details the shopper gave (name, phone, address, city, country, language). (2) The order selection they have already settled on in this same conversation (product, colour, size, quantity, payment method). Support Arabic, English, dialects and mixed languages. Understand meaning and context — never match keywords. For contact details judge only INTENT, never correctness: if the customer offered a value as their number, name or address, return it verbatim even when it is obviously invalid, too short, too long, or has an impossible prefix — a later step validates it and asks the customer to correct it, so a value you omit can never be corrected. For the order selection return only what the customer genuinely decided, even if it was decided many messages ago; if they later changed their mind, return the latest decision. Never fabricate a value the customer did not give, and never fix, complete or reformat what they did give.",
+              "You read a sales chat and extract two things. (1) The contact details the shopper gave (name, phone, address, city, country, language). (2) The order selection they have already settled on in this same conversation (product, colour, size, quantity, payment method). Support Arabic, English, dialects and mixed languages. Understand meaning and context — never match keywords. STRICT EVIDENCE RULE: assistant messages are context and proposals only; they are NEVER evidence that the shopper requested, chose, confirmed or discussed a value. A value may be extracted only when a user message states it, selects it, corrects it, or clearly accepts a specific assistant proposal. A generic acknowledgement, a question like whether the assistant understands, silence after a proposal, or an assistant-attached image does not accept any product detail. Example: user says «عايز هودي», assistant guesses a beige hoodie size S, user asks «انت عارف أنا عايز إيه صح» — extract product_name=هودي only; omit colour and size. For contact details judge only INTENT, never correctness: if the customer offered a value as their number, name or address, return it verbatim even when it is obviously invalid, too short, too long, or has an impossible prefix — a later step validates it and asks the customer to correct it, so a value you omit can never be corrected. For the order selection return only what the customer genuinely decided, even if it was decided many messages ago; if they later changed their mind, return the latest decision. Never fabricate a value the customer did not give, and never fix, complete or reformat what they did give.",
           },
           { role: "user", content: convoText },
         ],
