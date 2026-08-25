@@ -27,9 +27,11 @@ export interface ActiveOrderStateInput {
   } | null;
   /**
    * The selection the customer already settled on in this conversation, read
-   * from the PERSISTED structured order state (`conversations.order_state`),
-   * not re-derived from the transcript. Used only to fill fields the order row
-   * does not carry yet; a real order row always wins.
+ * from the PERSISTED structured order state (`conversations.order_state`),
+ * not re-derived from the transcript. Used only to fill fields the order row
+ * does not carry yet; a real order row always wins. Selection values may still
+ * be provisional; `stageLines` tells the model whether customer confirmation
+ * actually exists.
    */
   selection?: {
     product_name?: string | null;
@@ -132,7 +134,7 @@ export function buildActiveOrderStateBlock(input: ActiveOrderStateInput): string
     lines.push("مراحل البيانات (مبدئي → متحقق → مؤكَّد → منفَّذ):");
     for (const l of stageLines) lines.push(`- ${l}`);
     lines.push(
-      "«مبدئي» يعني مفهوم من كلام العميل ولم يُتحقق منه بعد؛ لا تعتبره منفَّذاً. «منفَّذ» مسجَّل في الطلب فعلياً ولا يتغيّر.",
+      "«مبدئي» فرضية مستخرجة وليست دليلاً أن العميل اختارها أو أكدها. «متحقق» يعني أن القيمة موجودة في المتجر فقط، وليس أن العميل اختارها. لا تنسب أي قيمة للعميل ولا تقل إنه قالها أو اتكلم عنها أو إنك فاكرها إلا إذا كانت «مؤكَّد» أو «منفَّذ». «منفَّذ» مسجَّل في الطلب فعلياً ولا يتغيّر.",
     );
   }
 
@@ -163,7 +165,7 @@ export function buildActiveOrderStateBlock(input: ActiveOrderStateInput): string
 
   lines.push(
     `الحقول الناقصة فقط: [${missing.join("، ")}]`,
-    "اسأل فقط عن الحقول المذكورة في «الحقول الناقصة». أي حقل له قيمة هنا مؤكَّد ولا تسأل عنه ولا تطلب تأكيده مرة أخرى.",
+    "اسأل عن الحقول الناقصة عند الحاجة للخطوة التالية. الحقل ذو المرحلة «مؤكَّد» أو «منفَّذ» فقط هو اختيار محسوم من العميل ولا يُسأل عنه مجدداً. الحقل «مبدئي» أو «متحقق» لا يجوز تقديمه كاختيار أو ذكرى للعميل؛ استخدمه كاحتمال داخلي فقط واسأل سؤال تأكيد قصيراً عند الحاجة.",
   );
 
   return lines.join("\n");

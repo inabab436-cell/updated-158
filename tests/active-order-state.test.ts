@@ -58,11 +58,19 @@ describe("buildActiveOrderStateBlock", () => {
     expect(out).toContain("الكمية، طريقة الدفع");
   });
 
-  it("carries the ask-only-missing rule", () => {
+  it("distinguishes provisional values from customer-confirmed facts", () => {
     const out = buildActiveOrderStateBlock({});
-    expect(out).toContain(
-      "اسأل فقط عن الحقول المذكورة في «الحقول الناقصة». أي حقل له قيمة هنا مؤكَّد ولا تسأل عنه ولا تطلب تأكيده مرة أخرى.",
-    );
+    expect(out).toContain("«مؤكَّد» أو «منفَّذ» فقط هو اختيار محسوم من العميل");
+    expect(out).toContain("«مبدئي» أو «متحقق» لا يجوز تقديمه كاختيار أو ذكرى للعميل");
+  });
+
+  it("warns that verified catalogue data is not customer confirmation", () => {
+    const out = buildActiveOrderStateBlock({
+      selection: { product_name: "هودي", color: "بيج", size: "S" },
+      stageLines: ["المنتج: هودي (متحقق)", "اللون: بيج (مبدئي)", "المقاس: S (مبدئي)"],
+    });
+    expect(out).toContain("«متحقق» يعني أن القيمة موجودة في المتجر فقط، وليس أن العميل اختارها");
+    expect(out).toContain("لا تنسب أي قيمة للعميل");
   });
 
   it("is safe against non-array / non-object items payloads", () => {
